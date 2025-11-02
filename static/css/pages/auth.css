@@ -123,38 +123,6 @@
   text-decoration: underline;
 }
 
-/* 2FA Code Input */
-.code-input-container {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.code-input {
-  width: 3rem;
-  height: 3.5rem;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  background-color: var(--input-bg);
-  border: 2px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-
-.code-input:focus {
-  outline: none;
-  border-color: var(--input-focus);
-  box-shadow: 0 0 0 3px rgba(212, 103, 69, 0.1);
-}
-
-.code-input.error {
-  border-color: var(--error-text);
-  animation: shake 0.3s ease-in-out;
-}
-
 /* Animations */
 @keyframes fadeInUp {
   from {
@@ -164,18 +132,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-10px);
-  }
-  75% {
-    transform: translateX(10px);
   }
 }
 
@@ -190,11 +146,5 @@
     right: 1rem;
     width: 2.25rem;
     height: 2.25rem;
-  }
-
-  .code-input {
-    width: 2.5rem;
-    height: 3rem;
-    font-size: 1.25rem;
   }
 }
