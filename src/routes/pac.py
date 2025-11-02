@@ -57,6 +57,23 @@ def is_device_matched(device: Device | None, devices: list[Device]) -> bool:
     return any(d.id == device.id for d in devices)
 
 
+def get_real_ip(request: Request) -> str:
+    """Extract the real client IP address from the request headers."""
+    possible_headers = [
+        "X-Forwarded-For",
+        "X-Real-IP",
+        "CF-Connecting-IP",  # Cloudflare
+        "True-Client-IP",    # Akamai
+    ]
+    for header in possible_headers:
+        ip = request.headers.get(header)
+        if ip:
+            # In case of multiple IPs, take the first one
+            return ip.split(",")[0].strip()
+
+    return typing.cast(Address, request.client).host
+
+
 @router.get("/pac", tags=["PAC"])
 async def pac(request: Request, device_token: str | None = None) -> Response:
     """Generate and return the PAC file based on active configurations."""
@@ -72,7 +89,7 @@ async def pac(request: Request, device_token: str | None = None) -> Response:
     user_agent = request.headers.get("User-Agent")
 
     record = await AccessRecord.create(
-        ip=typing.cast(Address, request.client).host, user_agent=user_agent, device=device
+        ip=get_real_ip(request), user_agent=user_agent, device=device
     )
 
     configs = await Config.filter(is_active=True).order_by("priority")
