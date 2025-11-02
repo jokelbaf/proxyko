@@ -353,7 +353,7 @@
 
 {% if totp_secret %}
 <script type="module">
-  import QrCode from "{{ url_for('static', path='/js/lib/qrcode.js') }}";
+  import QrCode from "/static/js/lib/qrcode.js";
 
   (function() {
     const secret = '{{ totp_secret }}';
