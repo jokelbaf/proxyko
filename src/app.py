@@ -14,12 +14,12 @@ from loguru import logger
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 
 import db
 from db.models import AccessRecord
 from middlewares import AuthMiddleware, ThemeMiddleware
 from modules.templates import Jinja2Templates
+from modules.utility import get_real_ip
 from routes import (
     PendingLogins,
     configs_router,
@@ -166,7 +166,7 @@ def http_exception_handler(request: Request, exc: HTTPException) -> Response:
     )
 
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["15/minute"])
+limiter = Limiter(key_func=get_real_ip, default_limits=["15/minute"])
 app.state.limiter = limiter
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
