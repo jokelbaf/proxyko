@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
 
 from db.models import Session
+from modules.cookies import delete_secure_cookie
 
 router = APIRouter()
 
@@ -17,6 +18,6 @@ async def logout(request: Request) -> Response:
             await session.delete()
 
     response = RedirectResponse(url="/login", status_code=303)
-    response.delete_cookie(key="session-token")
+    delete_secure_cookie(response, key="session-token")
 
     return response

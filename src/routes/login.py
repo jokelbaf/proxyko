@@ -9,6 +9,7 @@ from fastapi.responses import RedirectResponse
 
 from db.models import Session, User
 from modules.auth import verify_totp
+from modules.cookies import delete_secure_cookie, set_secure_cookie
 from modules.templates import Jinja2Templates
 
 router = APIRouter()
@@ -91,7 +92,7 @@ async def login_post(
         request.app.state.pending_logins[temp_token] = pending_login
 
         rsp = RedirectResponse(url="/login/2fa", status_code=303)
-        rsp.set_cookie(key="pending-login-token", value=temp_token, httponly=True)
+        set_secure_cookie(rsp, key="pending-login-token", value=temp_token, max_age=300)
 
         return rsp
 
@@ -100,7 +101,7 @@ async def login_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    rsp.set_cookie(key="session-token", value=session_token, httponly=True)
+    set_secure_cookie(rsp, key="session-token", value=session_token)
 
     return rsp
 
@@ -149,8 +150,8 @@ async def login_2fa_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    rsp.set_cookie(key="session-token", value=session_token, httponly=True)
-    rsp.delete_cookie(key="pending-login-token")
+    set_secure_cookie(rsp, key="session-token", value=session_token)
+    delete_secure_cookie(rsp, key="pending-login-token")
 
     del request.app.state.pending_logins[pending_login_token]
 

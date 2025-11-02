@@ -5,6 +5,7 @@ from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import RedirectResponse
 
 from db.models import Session, User
+from modules.cookies import set_secure_cookie
 from modules.templates import Jinja2Templates
 
 router = APIRouter()
@@ -60,6 +61,6 @@ async def register_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    rsp.set_cookie(key="session-token", value=session_token, httponly=True)
+    set_secure_cookie(rsp, key="session-token", value=session_token)
 
     return rsp
