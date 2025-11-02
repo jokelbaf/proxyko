@@ -7,6 +7,7 @@ def is_production() -> bool:
     """Check if the app is running in production mode."""
     return os.getenv("PRODUCTION", "no").lower() == "yes"
 
+
 def set_secure_cookie(
     response: Response,
     key: str,
@@ -24,6 +25,7 @@ def set_secure_cookie(
         secure=is_production(),
         samesite="lax",
     )
+
 
 def delete_secure_cookie(response: Response, key: str) -> None:
     """Delete a cookie with the same security attributes used when setting it."""
