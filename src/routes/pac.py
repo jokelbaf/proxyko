@@ -63,7 +63,7 @@ def get_real_ip(request: Request) -> str:
         "X-Forwarded-For",
         "X-Real-IP",
         "CF-Connecting-IP",  # Cloudflare
-        "True-Client-IP",    # Akamai
+        "True-Client-IP",  # Akamai
     ]
     for header in possible_headers:
         ip = request.headers.get(header)
