@@ -74,6 +74,11 @@
   box-shadow: var(--shadow-md);
 }
 
+.auth-logo svg {
+  width: 2rem;
+  height: 2rem;
+}
+
 /* Auth Header */
 .auth-header {
   text-align: center;
