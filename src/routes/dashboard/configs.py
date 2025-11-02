@@ -146,6 +146,7 @@ async def new_config(
         },
     )
 
+
 @router.post("/dashboard/configs/new", tags=["Dashboard"])
 async def create_config(
     request: Request,
