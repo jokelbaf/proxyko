@@ -1,0 +1,36 @@
+x-db-config: &db-config
+  # Remember to change these to secure values
+  MARIADB_ROOT_PASSWORD: "changeme_root"
+  MARIADB_DATABASE: "proxyko"
+  MARIADB_USER: "proxyko"
+  MARIADB_PASSWORD: "changeme_password"
+  MARIADB_HOST: "db"
+  MARIADB_PORT: "3306"
+
+services:
+  db:
+    image: mariadb:latest
+    environment:
+      <<: *db-config
+    volumes:
+      - db_data:/var/lib/mysql
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_started
+    restart: on-failure
+    environment:
+      <<: *db-config
+
+      # Can be configured to your needs
+      HOST: "0.0.0.0"
+      PORT: "8032"
+      LOGURU_LEVEL: "INFO"
+
+    ports:
+      - "8032:8032"
+
+volumes:
+  db_data:

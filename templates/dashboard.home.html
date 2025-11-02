@@ -1,0 +1,304 @@
+{% extends "dashboard.layout.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/pages/home.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="home-container">
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1 class="welcome-title">Welcome back, {{ user.username }}!</h1>
+      <p class="welcome-subtitle">Here's what's happening with your PAC service today</p>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-primary">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ total_logs }}</div>
+        <div class="stat-label">Total Access Logs</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-success">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ total_devices }}</div>
+        <div class="stat-label">Connected Devices</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-info">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ active_configs }}/{{ total_configs }}</div>
+        <div class="stat-label">Active Configs</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2 class="chart-title">Access Trend (Last 7 Days)</h2>
+        <p class="chart-description">Number of proxy requests per day</p>
+      </div>
+      <div class="chart-container">
+        <canvas id="accessTrendChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2 class="chart-title">Access by Device Type</h2>
+        <p class="chart-description">Number of access logs per device type</p>
+      </div>
+      <div class="chart-container">
+        <canvas id="deviceDistributionChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="activity-card">
+    <div class="activity-header">
+      <h2 class="activity-title">Recent Activity</h2>
+      <a href="/dashboard/logs" class="activity-link">View All</a>
+    </div>
+    <div class="activity-list">
+      {% if recent_activity %}
+        {% for log in recent_activity %}
+        <div class="activity-item">
+          <div class="activity-icon">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div class="activity-content">
+            <div class="activity-description">
+              <span class="activity-ip">{{ log.ip }}</span>
+              {% if log.device %}
+              <span class="activity-separator">•</span>
+              <span class="activity-device">{{ log.device.name }}</span>
+              {% endif %}
+            </div>
+            <div class="activity-time ts" data-timestamp="{{ log.created_at.isoformat() }}" data-format="datetime">{{ log.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+          <p class="empty-text">No recent activity</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', path='/js/lib/chart.js') }}"></script>
+<script>
+  const getPrimaryColor = () => getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+  const getPrimaryWithAlpha = (alpha) => {
+    const color = getPrimaryColor();
+
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const accessTrendCtx = document.getElementById('accessTrendChart').getContext('2d');
+  const accessTrendChart = new Chart(accessTrendCtx, {
+    type: 'line',
+    data: {
+      labels: JSON.parse('{{ chart_labels|tojson }}'),
+      datasets: [{
+        label: 'Access Requests',
+        data: JSON.parse('{{ chart_data|tojson }}'),
+        borderColor: getPrimaryColor(),
+        backgroundColor: getPrimaryWithAlpha(0.15),
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: getPrimaryColor(),
+        pointBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim(),
+        pointBorderWidth: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim(),
+          titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+          bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
+          callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(context) {
+              return context.parsed.y + ' requests';
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          border: {
+            display: false
+          },
+          ticks: {
+            stepSize: 1,
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+          },
+          grid: {
+            display: false,
+            drawBorder: false,
+          }
+        },
+        x: {
+          border: {
+            display: false
+          },
+          ticks: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+          },
+          grid: {
+            display: false,
+            drawBorder: false,
+          }
+        }
+      }
+    }
+  });
+
+  const deviceTypes = JSON.parse('{{ device_types|tojson }}');
+  const deviceLabels = Object.keys(deviceTypes).map(type => {
+    const typeMap = {
+      'DESKTOP': 'Desktop',
+      'APPLE': 'Apple',
+      'ANDROID': 'Android',
+      'TV': 'TV',
+      'OTHER': 'Other'
+    };
+    return typeMap[type] || type;
+  });
+  const deviceData = Object.values(deviceTypes);
+
+  const deviceColors = {
+    'DESKTOP': '#6f5ace',
+    'APPLE': '#cb9cf9',
+    'ANDROID': '#50ab54',
+    'TV': getComputedStyle(document.documentElement).getPropertyValue('--primary').trim(),
+    'OTHER': getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim()
+  };
+
+  const backgroundColors = Object.keys(deviceTypes).map(type => deviceColors[type] || '#999999');
+
+  const textPrimaryColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#2d2d2d';
+
+  const deviceDistributionCtx = document.getElementById('deviceDistributionChart').getContext('2d');
+  const deviceDistributionChart = new Chart(deviceDistributionCtx, {
+    type: 'doughnut',
+    data: {
+      labels: deviceLabels,
+      datasets: [{
+        data: deviceData,
+        backgroundColor: backgroundColors,
+        borderWidth: 5,
+        borderColor: 'rgba(0, 0, 0, 0)',
+        hoverOffset: 10,
+        hoverBorderColor: 'rgba(0, 0, 0, 0)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            color: textPrimaryColor,
+            font: {
+              size: 13,
+              weight: '500'
+            },
+            boxWidth: 12,
+            boxHeight: 12,
+            generateLabels: function(chart) {
+              const data = chart.data;
+              if (data.labels.length && data.datasets.length) {
+                return data.labels.map((label, i) => {
+                  const meta = chart.getDatasetMeta(0);
+                  const style = meta.controller.getStyle(i);
+                  return {
+                    text: label,
+                    fillStyle: style.backgroundColor,
+                    strokeStyle: style.borderColor,
+                    lineWidth: 0,
+                    hidden: false,
+                    index: i,
+                    fontColor: textPrimaryColor
+                  };
+                });
+              }
+              return [];
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary').trim(),
+          titleColor: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+          bodyColor: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim(),
+          borderWidth: 1,
+          padding: 12,
+          displayColors: true,
+          boxWidth: 12,
+          boxHeight: 12,
+          boxPadding: 6,
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed / total) * 100).toFixed(1);
+              return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

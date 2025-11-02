@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Proxyko{% endblock %}</title>
+
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/img/logo.png') }}">
+  
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/fonts.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/global.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/components.css') }}">
+  
+  {% block stylesheets %}{% endblock %}
+</head>
+<body>
+  {% block body %}{% endblock %}
+
+  <script>
+    function setCookie(name, value, days = 365) {
+      const expires = new Date();
+      expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+      document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+    }
+
+    function initThemeToggle() {
+      const themeToggle = document.getElementById('themeToggle');
+      const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+      
+      if (!themeToggle && !mobileThemeToggle) return;
+      
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme') || 'light';
+
+      updateThemeIcons(currentTheme);
+
+      function toggleTheme() {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        html.setAttribute('data-theme', newTheme);
+        setCookie('theme', newTheme);
+        updateThemeIcons(newTheme);
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+      }
+      
+      if (mobileThemeToggle) {
+        mobileThemeToggle.addEventListener('click', toggleTheme);
+      }
+
+      function updateThemeIcons(theme) {
+        const allSunIcons = document.querySelectorAll('.sun-icon');
+        const allMoonIcons = document.querySelectorAll('.moon-icon');
+        
+        if (theme === 'dark') {
+          allSunIcons.forEach(icon => icon.classList.add('hidden'));
+          allMoonIcons.forEach(icon => icon.classList.remove('hidden'));
+        } else {
+          allSunIcons.forEach(icon => icon.classList.remove('hidden'));
+          allMoonIcons.forEach(icon => icon.classList.add('hidden'));
+        }
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initThemeToggle);
+    } else {
+      initThemeToggle();
+    }
+
+    function formatDateTime() {
+      document.querySelectorAll('.ts').forEach(el => {
+        const timestamp = el.dataset.timestamp;
+        if (!timestamp) return;
+        
+        const date = new Date(timestamp);
+        const format = el.dataset.format || 'datetime';
+        
+        let formatted = '';
+        switch (format) {
+          case 'time':
+            formatted = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            break;
+          case 'date':
+            formatted = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+            break;
+          case 'date-long':
+            formatted = date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+            break;
+          case 'datetime':
+            formatted = date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) + ' at ' + 
+                       date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            break;
+          default:
+            formatted = date.toLocaleString();
+        }
+        
+        el.textContent = formatted;
+      });
+    }
+
+    formatDateTime();
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

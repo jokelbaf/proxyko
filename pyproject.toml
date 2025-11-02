@@ -1,0 +1,46 @@
+[project]
+name = "proxyko"
+version = "0.1.0"
+description = "Proxyko is a powerful Proxy Auto-Configuration (PAC) service that allows users to manage per-device proxy settings through a user-friendly web dashboard."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "fastapi[standard]>=0.120.2",
+    "jinja2>=3.1.6",
+    "loguru>=0.7.3",
+    "pyotp>=2.9.0",
+    "python-dotenv>=1.2.1",
+    "slowapi>=0.1.9",
+    "tortoise-orm[aiomysql]>=0.25.1",
+    "uvicorn[standard]>=0.38.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.3",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "B008",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

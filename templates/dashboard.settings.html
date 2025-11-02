@@ -1,0 +1,54 @@
+{% extends "dashboard.layout.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/pages/settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <div class="flex md:items-center justify-between mb-6 flex-col space-y-3 md:flex-row md:space-y-0">
+    <div>
+      <h1 class="content-title mb-0">Settings</h1>
+      <p class="content-subtitle mb-0">Configure global application settings</p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert alert-success">{{ message }}</div>
+  {% endif %}
+
+  <form method="POST" action="/dashboard/settings" class="settings-form">
+    <div class="settings-section">
+      <div class="section-header">
+        <h2 class="section-title">Authentication</h2>
+        <p class="section-description">Manage authentication and security settings</p>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <label for="require_auth" class="setting-label">Require Authentication</label>
+          <p class="setting-description">
+            If this setting is enabled, the /pac route will return a default response when device token is not set.
+          </p>
+        </div>
+        <div class="setting-control">
+          <label class="toggle-switch">
+            <input type="checkbox" name="require_auth" id="require_auth" {% if config.require_auth %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions">
+      <button type="submit" class="btn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Settings
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

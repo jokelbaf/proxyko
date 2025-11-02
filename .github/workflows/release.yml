@@ -1,0 +1,22 @@
+name: Create Release
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - "pyproject.toml"
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Create release
+        uses: seriaati/create-release@main
+        with:
+          python_version: "3.13"
+          tool: "uv"

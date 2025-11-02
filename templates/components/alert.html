@@ -1,0 +1,19 @@
+{% if errors and errors|length > 0 %}
+<div class="alert alert-error" role="alert">
+  {% if errors|length == 1 %}
+    {{ errors[0] }}
+  {% else %}
+    <ul class="alert-list">
+      {% for error in errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if success %}
+<div class="alert alert-success" role="alert">
+  {{ success }}
+</div>
+{% endif %}

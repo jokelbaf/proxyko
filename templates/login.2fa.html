@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+
+{% block title %}Two-Factor Authentication - Proxyko{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/pages/auth.css') }}">
+{% endblock %}
+
+{% block body %}
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z"/>
+    </svg>
+    <svg class="moon-icon hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z"/>
+    </svg>
+  </button>
+
+  <div class="auth-page">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-logo">🔒</div>
+        
+        <div class="auth-header">
+          <h1 class="auth-title">Two-Factor Authentication</h1>
+          <p class="auth-subtitle">Enter the 6-digit code from your authenticator app</p>
+        </div>
+
+        {% include "components/alert.html" %}
+
+        <form method="POST" action="/login/2fa" class="auth-form" id="tfaForm">
+          <div class="code-input-container">
+            <input
+              type="text"
+              class="code-input"
+              maxlength="1"
+              pattern="[0-9]"
+              inputmode="numeric"
+              autocomplete="off"
+              data-index="0"
+              autofocus
+            />
+            <input
+              type="text"
+              class="code-input"
+              maxlength="1"
+              pattern="[0-9]"
+              inputmode="numeric"
+              autocomplete="off"
+              data-index="1"
+            />
+            <input
+              type="text"
+              class="code-input"
+              maxlength="1"
+              pattern="[0-9]"
+              inputmode="numeric"
+              autocomplete="off"
+              data-index="2"
+            />
+            <input
+              type="text"
+              class="code-input"
+              maxlength="1"
+              pattern="[0-9]"
+              inputmode="numeric"
+              autocomplete="off"
+              data-index="3"
+            />
+            <input
+              type="text"
+              class="code-input"
+              maxlength="1"
+              pattern="[0-9]"
+              inputmode="numeric"
+              autocomplete="off"
+              data-index="4"
+            />
+            <input
+              type="text"
+              class="code-input"
+              maxlength="1"
+              pattern="[0-9]"
+              inputmode="numeric"
+              autocomplete="off"
+              data-index="5"
+            />
+          </div>
+
+          <input type="hidden" name="code" id="codeInput" />
+
+          <button type="submit" class="btn btn-full btn-lg" id="verifyBtn">
+            Verify Code
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p class="auth-footer-text">
+            <a href="/login" class="auth-link">← Back to login</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const codeInputs = document.querySelectorAll('.code-input');
+  const hiddenCodeInput = document.getElementById('codeInput');
+  const tfaForm = document.getElementById('tfaForm');
+  const verifyBtn = document.getElementById('verifyBtn');
+
+  codeInputs.forEach((input, index) => {
+    input.addEventListener('input', (e) => {
+      const value = e.target.value;
+
+      if (!/^\d*$/.test(value)) {
+        e.target.value = '';
+        return;
+      }
+
+      if (value.length === 1 && index < codeInputs.length - 1) {
+        codeInputs[index + 1].focus();
+      }
+
+      updateHiddenInput();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && index > 0) {
+        codeInputs[index - 1].focus();
+      }
+    });
+
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const pastedData = e.clipboardData.getData('text').slice(0, 6);
+      
+      if (!/^\d+$/.test(pastedData)) {
+        return;
+      }
+
+      pastedData.split('').forEach((char, i) => {
+        if (codeInputs[i]) {
+          codeInputs[i].value = char;
+        }
+      });
+
+      const lastFilledIndex = Math.min(pastedData.length, codeInputs.length) - 1;
+      codeInputs[lastFilledIndex].focus();
+
+      updateHiddenInput();
+    });
+
+    input.addEventListener('focus', (e) => {
+      e.target.select();
+    });
+  });
+
+  function updateHiddenInput() {
+    const code = Array.from(codeInputs).map(input => input.value).join('');
+    hiddenCodeInput.value = code;
+
+    verifyBtn.disabled = code.length !== 6;
+  }
+
+  tfaForm.addEventListener('submit', (e) => {
+    const code = hiddenCodeInput.value;
+    
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+      e.preventDefault();
+      codeInputs.forEach(input => input.classList.add('error'));
+      setTimeout(() => {
+        codeInputs.forEach(input => input.classList.remove('error'));
+      }, 300);
+    }
+  });
+
+  codeInputs[codeInputs.length - 1].addEventListener('input', (e) => {
+    if (e.target.value) {
+      const code = Array.from(codeInputs).map(input => input.value).join('');
+      if (code.length === 6 && /^\d{6}$/.test(code)) {
+        setTimeout(() => {
+          tfaForm.submit();
+        }, 300);
+      }
+    }
+  });
+
+  updateHiddenInput();
+</script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "dashboard.layout.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/pages/config.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <div class="flex md:items-center justify-between mb-6 flex-col space-y-3 md:flex-row md:space-y-0">
+    <div>
+      <h1 class="content-title mb-0">{{ 'Edit Config' if config else 'New Config' }}</h1>
+      <p class="content-subtitle mb-0">{{ 'Update configuration settings' if config else 'Create a new proxy configuration' }}</p>
+    </div>
+    <a href="/dashboard/configs" class="btn btn-secondary btn-sm">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to Configs
+    </a>
+  </div>
+
+  {% if errors %}
+  <div class="alert alert-error">
+    <ul class="alert-list">
+      {% for error in errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="POST" action="{{ '/dashboard/configs/' + (config.id|string if config else 'new') }}" class="config-form">
+    <div class="form-section">
+      <h3 class="form-section-title">Basic Information</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name" class="form-label">Config Name <span class="required">*</span></label>
+          <input type="text" id="name" name="name" class="form-input" value="{{ config.name if config else '' }}" placeholder="My Proxy Config" required>
+          <span class="form-hint">A descriptive name for this configuration (3-64 characters)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="mode" class="form-label">Mode <span class="required">*</span></label>
+          <select id="mode" name="mode" class="form-input" required>
+            <option value="OR" {% if config and config.mode == 'OR' %}selected{% endif %}>OR - Any condition matches</option>
+            <option value="AND" {% if config and config.mode == 'AND' %}selected{% endif %}>AND - All conditions must match</option>
+          </select>
+          <span class="form-hint">How device and IP filters should be combined</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" name="description" class="form-input" rows="2" placeholder="Optional description for this configuration">{{ config.description if config else '' }}</textarea>
+        <span class="form-hint">Optional description (max 256 characters)</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title">Filters</h3>
+      
+      <div class="form-group">
+        <label for="ip_filter" class="form-label">IP Filter</label>
+        <input type="text" id="ip_filter" name="ip_filter" class="form-input" value="{{ config.ip_filter if config else '' }}" placeholder="192.168.1.0/24, 10.0.0.1">
+        <span class="form-hint">Comma-separated IP addresses or CIDR ranges (max 128 characters)</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Device Filter</label>
+        <div class="device-checkboxes">
+          {% for device in devices %}
+          <label class="checkbox-label">
+            <input type="checkbox" name="device_ids" value="{{ device.id }}" class="checkbox-input" {% if config and device in config.devices %}checked{% endif %}>
+            <span class="checkbox-text">{{ device.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        <span class="form-hint">Select which devices this config applies to</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title">PAC Function <span class="required">*</span></h3>
+      
+      <div class="form-group">
+        <textarea id="function" name="function" class="form-input code-textarea" rows="20" required placeholder="function FindProxyForURL(url, host) {&#10;  // Your PAC logic here&#10;  return &quot;DIRECT&quot;;&#10;}">{{ config.function if config else 'function FindProxyForURL(url, host) {\n  // Your PAC logic here\n  return "DIRECT";\n}' }}</textarea>
+        <span class="form-hint">The PAC file function that determines proxy behavior</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-group">
+        <label class="checkbox-label checkbox-label-inline">
+          <input type="checkbox" name="is_active" class="checkbox-input" {% if not config or config.is_active %}checked{% endif %}>
+          <span class="checkbox-text">Enable this configuration</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="/dashboard/configs" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        {{ 'Update Config' if config else 'Create Config' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.getElementById('function').addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+  
+      this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+
+      this.selectionStart = this.selectionEnd = start + 2;
+    }
+  });
+</script>
+{% endblock %}

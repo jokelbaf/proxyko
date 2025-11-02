@@ -1,0 +1,332 @@
+/* Logs Page */
+
+.logs-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.logs-table {
+  width: 100%;
+  min-width: 300px;
+  border-collapse: collapse;
+}
+
+.logs-table thead {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logs-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.logs-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color var(--transition-base);
+}
+
+.logs-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.logs-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.logs-table td {
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.log-timestamp {
+  white-space: nowrap;
+}
+
+.timestamp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.timestamp-date {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.timestamp-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: 'Courier New', monospace;
+}
+
+.log-ip {
+  white-space: nowrap;
+}
+
+.ip-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-family: 'Courier New', monospace;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+
+.log-device {
+  white-space: nowrap;
+}
+
+.device-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.device-icon-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.icon-small {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.device-icon-small.device-icon-desktop {
+  background: linear-gradient(135deg, rgba(169, 156, 244, 0.3) 0%, rgba(169, 156, 244, 0.15) 100%);
+  color: #6f5ace;
+}
+
+.device-icon-small.device-icon-apple {
+  background: linear-gradient(135deg, rgba(214, 156, 253, 0.3) 0%, rgba(214, 156, 253, 0.15) 100%);
+  color: #cb9cf9;
+}
+
+.device-icon-small.device-icon-android {
+  background: linear-gradient(135deg, rgba(80, 171, 84, 0.25) 0%, rgba(80, 171, 84, 0.12) 100%);
+  color: #50ab54;
+}
+
+.device-icon-small.device-icon-tv {
+  background: linear-gradient(135deg, rgba(244, 197, 156, 0.3) 0%, rgba(244, 197, 156, 0.15) 100%);
+  color: #e8a567;
+}
+
+.device-icon-small.device-icon-other {
+  background: linear-gradient(135deg, rgba(150, 150, 150, 0.2) 0%, rgba(150, 150, 150, 0.1) 100%);
+  color: #888888;
+}
+
+.device-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.no-device {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.log-user-agent {
+  max-width: 300px;
+}
+
+.user-agent-text {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.pagination-btn:hover:not(.disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pagination-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-btn .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.pagination-number:hover:not(.active) {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pagination-number.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  cursor: default;
+  pointer-events: none;
+}
+
+.pagination-ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 4rem;
+  height: 4rem;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-bottom: 1.5rem;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  max-width: 28rem;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .logs-table-container {
+    border-radius: var(--radius-sm);
+  }
+
+  .logs-table th,
+  .logs-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .logs-table th:nth-child(4),
+  .logs-table td:nth-child(4) {
+    display: none;
+  }
+
+  .log-user-agent {
+    max-width: 150px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pagination-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .pagination-numbers {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pagination-number {
+    min-width: 2rem;
+    height: 2rem;
+    font-size: 0.8125rem;
+  }
+
+  .empty-state {
+    padding: 3rem 1rem;
+  }
+
+  .empty-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+}

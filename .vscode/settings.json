@@ -1,0 +1,9 @@
+{
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportIncompatibleVariableOverride": "none"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.git": false
+    }
+}
