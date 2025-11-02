@@ -9,6 +9,7 @@ from .dashboard import (
 from .dashboard import (
     router as dashboard_router,
 )
+from .health import router as health_router
 from .index import router as index_router
 from .login import PendingLogins
 from .login import router as login_router
@@ -30,4 +31,5 @@ __all__ = [
     "settings_router",
     "users_router",
     "home_router",
+    "health_router",
 ]

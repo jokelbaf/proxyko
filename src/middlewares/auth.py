@@ -4,7 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from db.models import Session, User
 
-EXCLUDED_ROUTES: list[str] = ["/pac", "/logout", ".js", ".css"]
+EXCLUDED_ROUTES: list[str] = ["/pac", "/logout", "/health", ".js", ".css"]
 
 AUTH_ROUTES: list[str] = [
     "/login",

@@ -25,6 +25,7 @@ from routes import (
     configs_router,
     dashboard_router,
     devices_router,
+    health_router,
     home_router,
     index_router,
     login_router,
@@ -187,6 +188,7 @@ app.include_router(configs_router)
 app.include_router(logs_router)
 app.include_router(settings_router)
 app.include_router(home_router)
+app.include_router(health_router)
 
 
 if __name__ == "__main__":
