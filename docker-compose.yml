@@ -4,22 +4,28 @@ x-db-config: &db-config
   MARIADB_DATABASE: "proxyko"
   MARIADB_USER: "proxyko"
   MARIADB_PASSWORD: "changeme_password"
-  MARIADB_HOST: "db"
+  MARIADB_HOST: "mariadb"
   MARIADB_PORT: "3306"
 
 services:
-  db:
+  mariadb:
     image: mariadb:latest
     environment:
       <<: *db-config
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "sh", "-c", "mariadb-admin ping -h localhost -u root -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
-  app:
+  proxyko:
     build: .
     depends_on:
-      db:
-        condition: service_started
+      mariadb:
+        condition: service_healthy
     restart: on-failure
     environment:
       <<: *db-config
@@ -31,6 +37,13 @@ services:
 
     ports:
       - "8032:8032"
+    
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:$$PORT/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 volumes:
   db_data:
