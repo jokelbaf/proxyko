@@ -313,7 +313,13 @@ async def delete_config(_: Request, config_id: int) -> Response:
     if existing_config is None:
         raise HTTPException(status_code=404, detail="The requested config does not exist.")
 
+    deleted_priority = existing_config.priority
     await existing_config.delete()
+
+    configs_to_reorder = await Config.filter(priority__gt=deleted_priority).order_by("priority")
+    for config in configs_to_reorder:
+        config.priority -= 1
+        await config.save(update_fields=["priority"])
 
     query_string = urllib.parse.urlencode({"message": "Config deleted successfully."})
     return RedirectResponse(

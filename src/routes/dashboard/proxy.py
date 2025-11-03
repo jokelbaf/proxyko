@@ -379,7 +379,15 @@ async def delete_proxy_rule(request: Request, rule_id: int) -> Response:
     if existing_rule is None:
         raise HTTPException(status_code=404, detail="The requested proxy rule does not exist.")
 
+    deleted_priority = existing_rule.priority
     await existing_rule.delete()
+
+    rules_to_reorder = await ProxyRule.filter(
+        user=user, priority__gt=deleted_priority
+    ).order_by("priority")
+    for rule in rules_to_reorder:
+        rule.priority -= 1
+        await rule.save(update_fields=["priority"])
 
     await notify_rules_change()
 
