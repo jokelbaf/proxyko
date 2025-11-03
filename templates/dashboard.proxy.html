@@ -133,6 +133,12 @@
         </div>
       </div>
       <div class="rule-actions">
+        <div class="toggle-container">
+          <label class="toggle-switch" title="{% if rule.is_enabled %}Disable{% else %}Enable{% endif %} rule">
+            <input type="checkbox" class="rule-toggle" data-rule-id="{{ rule.id }}" {% if rule.is_enabled %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
         <a href="/dashboard/proxy/rule/{{ rule.id }}" class="action-btn edit-btn">
           <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -269,6 +275,30 @@
       console.error('Error toggling proxy:', error);
       e.target.checked = !isEnabled;
     }
+  });
+
+  document.querySelectorAll('.rule-toggle').forEach(toggle => {
+    toggle.addEventListener('change', async (e) => {
+      const ruleId = toggle.dataset.ruleId;
+      const isEnabled = toggle.checked;
+
+      try {
+        const formData = new FormData();
+        formData.append('is_enabled', isEnabled);
+
+        const response = await fetch(`/dashboard/proxy/rule/${ruleId}/toggle`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          toggle.checked = !isEnabled;
+        }
+      } catch (error) {
+        console.error('Error toggling rule:', error);
+        toggle.checked = !isEnabled;
+      }
+    });
   });
 
   document.querySelectorAll('.delete-btn').forEach(btn => {

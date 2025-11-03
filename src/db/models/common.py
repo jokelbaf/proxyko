@@ -139,6 +139,7 @@ class ProxyRule(Model):
     name = fields.CharField(max_length=255)
     description = fields.TextField(null=True)
     priority = fields.IntField()
+    is_enabled = fields.BooleanField(default=True)
     ip_filter = fields.CharField(max_length=500, null=True)
 
     protocol_matches = fields.CharEnumField(ProtocolType, null=True)

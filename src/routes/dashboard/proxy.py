@@ -435,11 +435,30 @@ async def toggle_proxy_status(
     request: Request,
     enable_proxy: bool = Form(...),
 ) -> Response:
-    """Toggle global proxy status."""
+    """Toggle proxy server status."""
     config: GlobalConfig = request.app.state.global_config
+
     config.enable_proxy = enable_proxy
     await config.save(update_fields=["enable_proxy"])
 
     await notify_status_change(request.app.state)
+
+    return Response(status_code=200)
+
+
+@router.post("/dashboard/proxy/rule/{rule_id}/toggle", tags=["Dashboard"])
+async def toggle_rule(
+    _: Request,
+    rule_id: int,
+    is_enabled: bool = Form(...),
+) -> Response:
+    """Toggle rule enabled status."""
+    existing_rule = await ProxyRule.get_or_none(id=rule_id)
+
+    if existing_rule is None:
+        raise HTTPException(status_code=404, detail="The requested rule does not exist.")
+
+    existing_rule.is_enabled = is_enabled
+    await existing_rule.save(update_fields=["is_enabled"])
 
     return Response(status_code=200)
