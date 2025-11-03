@@ -53,7 +53,7 @@
 
       <div class="form-group">
         <label for="description" class="form-label">Description</label>
-        <textarea id="description" name="description" class="form-input" rows="2" placeholder="Optional description for this configuration">{{ config.description if config else '' }}</textarea>
+        <textarea id="description" name="description" class="form-input" rows="2" placeholder="Optional description for this configuration">{{ config.description if config and config.description else '' }}</textarea>
         <span class="form-hint">Optional description (max 256 characters)</span>
       </div>
     </div>
@@ -63,7 +63,7 @@
       
       <div class="form-group">
         <label for="ip_filter" class="form-label">IP Filter</label>
-        <input type="text" id="ip_filter" name="ip_filter" class="form-input" value="{{ config.ip_filter if config else '' }}" placeholder="192.168.1.0/24, 10.0.0.1">
+        <input type="text" id="ip_filter" name="ip_filter" class="form-input" value="{{ config.ip_filter if config and config.ip_filter else '' }}" placeholder="192.168.1.0/24, 10.0.0.1">
         <span class="form-hint">Comma-separated IP addresses or CIDR ranges (max 128 characters)</span>
       </div>
 
