@@ -14,7 +14,7 @@
 </div>
 
 <p align="center">
-Proxyko is a powerful Proxy Auto-Configuration (PAC) service that allows users to manage per-device proxy settings through a user-friendly web dashboard.
+Proxyko is a powerful Proxy Auto-Configuration (PAC) service with a built-in forwarding proxy that allows users to manage per-device proxy settings through a user-friendly web dashboard.
 </p>
 
 ## Preview
@@ -23,12 +23,12 @@ Proxyko is a powerful Proxy Auto-Configuration (PAC) service that allows users t
 ## Features
 
 Proxyko offers a range of features to simplify proxy configuration management:
-- **User-friendly Dashboard**: Intuitive web interface for service configuration.
-- **Per-Device Proxy Settings**: Assign unique proxy configs to each device using secure tokens.
-- **IP-based Access Control**: Restrict device access based on IP addresses for better security.
-- **Real-time Monitoring**: Track and analyze the service usage statistics through the dashboard.
-- **2FA Support**: Improve account security with two-factor authentication.
-- **Built-in Proxy Server**: Optional integrated [proxy server](https://github.com/jokelbaf/proxyko-proxy) with advanced rules configuration.
+- **User-friendly Dashboard**: An intuitive web interface for service configuration.
+- **Per-Device Proxy Settings**: Assign unique proxy configurations to each device using secure tokens.
+- **IP-based Access Control**: Restrict device access based on IP addresses for improved security.
+- **Real-time Monitoring**: Track and analyze service usage statistics through the dashboard.
+- **2FA Support**: Enhance account security with two-factor authentication.
+- **Built-in Proxy Server**: An optional integrated [proxy server](https://github.com/jokelbaf/proxyko-proxy) with advanced rule configuration.
 
 ## Installation
 
@@ -37,33 +37,33 @@ The preferred way to run Proxyko is via Docker Compose. Simply clone the repo, e
 docker-compose up -d
 ```
 
-The service is then accessible at `http://localhost:8032` by default.
+The service will then be accessible at `http://localhost:8032` by default.
 
 ## Development
 
-Any contributions are welcome! To set up a development environment, follow these steps:
+Contributions are welcome! To set up a development environment, follow these steps:
 
-1. Clone the Repository:
+1. Clone the repository:
    ```bash
    git clone https://github.com/jokelbaf/proxyko.git
    cd proxyko
    ```
-2. Create a Virtual Environment:
+2. Create a virtual environment:
    ```bash
    uv sync --dev
    ```
-3. Configure Environment Variables:
+3. Configure environment variables:
    Create a `.env` file in the root directory and set the necessary environment variables as per the `.env.example` file.
-4. Run the Application:
+4. Run the application:
    ```bash
    uv run src/app.py
    ```
 
-To work with proxy-related features, you need to clone and run the [proxy server](https://github.com/jokelbaf/proxyko-proxy) separately.
+To work with proxy-related features, you'll need to clone and run the [proxy server](https://github.com/jokelbaf/proxyko-proxy) separately.
 
 ## Motivation
 
-I love watching anime on Crunchyroll, but some shows have bugged subtitles on mobile devices. I first wrote a simple Proxy server using MITM proxy to automatically fix the subs, but turning it on and off, then configuring proxy settings on my IPhone every time was a pain. I explored different options and found out about PAC files, which allow automatic proxy configuration based on rules. However, managing PAC files manually was cumbersome, so I decided to create Proxyko to streamline the process. I deployed both it and my proxy server on a dedicated server, so now I can toggle the proxy on my phone with just a few taps :)
+I love watching anime on Crunchyroll, but some shows have broken subtitles on mobile devices. I initially wrote a simple proxy server using MITMProxy to automatically fix the subtitles, but turning it on and off and configuring proxy settings on my iPhone every time was a pain. I explored different options and discovered PAC files, which allow automatic proxy configuration based on rules. However, managing PAC files manually was cumbersome, so I decided to create Proxyko to streamline the process. I deployed both it and my proxy on a dedicated server, so now I can toggle the proxy on my phone with just a few taps :)
 
 ## License
 
