@@ -68,6 +68,7 @@ services:
       <<: *shared-configs
 
       # Proxy-specific settings
+      RUST_LOG: info
       HOST: 0.0.0.0
       PORT: *PROXY_PORT
 
