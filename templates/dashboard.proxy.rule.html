@@ -1,0 +1,243 @@
+{% extends "dashboard.layout.html" %}
+
+{% block stylesheets %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/pages/config.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+  <div class="flex md:items-center justify-between mb-6 flex-col space-y-3 md:flex-row md:space-y-0">
+    <div>
+      <h1 class="content-title mb-0">{{ 'Edit Proxy Rule' if rule else 'New Proxy Rule' }}</h1>
+      <p class="content-subtitle mb-0">{{ 'Update proxy rule settings' if rule else 'Create a new proxy forwarding rule' }}</p>
+    </div>
+    <a href="/dashboard/proxy" class="btn btn-secondary btn-sm">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to Proxy
+    </a>
+  </div>
+
+  {% if errors %}
+  <div class="alert alert-error">
+    <ul class="alert-list">
+      {% for error in errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="POST" action="{{ '/dashboard/proxy/rule/' + (rule.id|string if rule else 'new') }}" class="config-form">
+    <div class="form-section">
+      <h3 class="form-section-title">Basic Information</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name" class="form-label">Rule Name <span class="required">*</span></label>
+          <input type="text" id="name" name="name" class="form-input" value="{{ rule.name if rule else '' }}" placeholder="My Proxy Rule" required>
+          <span class="form-hint">A descriptive name for this rule (3-64 characters)</span>
+        </div>
+
+        <div class="form-group">
+          <label for="action" class="form-label">Action <span class="required">*</span></label>
+          <select id="action" name="action" class="form-input" required>
+            {% for action in proxy_actions %}
+            <option value="{{ action }}" {% if rule and rule.action == action %}selected{% endif %}>
+              {% if action == 'FORWARD' %}Forward to Proxy
+              {% elif action == 'DIRECT' %}Direct Connection
+              {% elif action == 'BLOCK' %}Block Connection
+              {% endif %}
+            </option>
+            {% endfor %}
+          </select>
+          <span class="form-hint">How this rule should handle matching traffic</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" name="description" class="form-input" rows="2" placeholder="Optional description for this rule">{{ rule.description if rule else '' }}</textarea>
+        <span class="form-hint">Optional description (max 256 characters)</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="form-section-title">Match Conditions</h3>
+      
+      <div class="form-group">
+        <label for="ip_filter" class="form-label">IP Filter</label>
+        <input type="text" id="ip_filter" name="ip_filter" class="form-input" value="{{ rule.ip_filter if rule else '' }}" placeholder="192.168.1.0/24, 10.0.0.1">
+        <span class="form-hint">Comma-separated IP addresses or CIDR ranges to match</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="protocol_matches" class="form-label">Protocol</label>
+          <select id="protocol_matches" name="protocol_matches" class="form-input">
+            <option value="">Any Protocol</option>
+            {% for protocol in protocol_types %}
+            <option value="{{ protocol }}" {% if rule and rule.protocol_matches == protocol %}selected{% endif %}>{{ protocol|upper }}</option>
+            {% endfor %}
+          </select>
+          <span class="form-hint">Protocol to match (optional)</span>
+        </div>
+
+        <div class="form-group" id="hostMatchesGroup">
+          <label for="host_matches" class="form-label">Host Pattern</label>
+          <input type="text" id="host_matches" name="host_matches" class="form-input" value="{{ rule.host_matches if rule else '' }}" placeholder="*.example.com">
+          <span class="form-hint">Host pattern with wildcards (optional)</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="port_matches" class="form-label">Port Matches</label>
+          <input type="text" id="port_matches" name="port_matches" class="form-input" value="{{ rule.port_matches if rule else '' }}" placeholder="80, 443, 8080-8090">
+          <span class="form-hint">Comma-separated ports or ranges (optional)</span>
+        </div>
+
+        <div class="form-group" id="pathMatchesGroup">
+          <label for="path_matches" class="form-label">Path Pattern</label>
+          <input type="text" id="path_matches" name="path_matches" class="form-input" value="{{ rule.path_matches if rule else '' }}" placeholder="/api/*">
+          <span class="form-hint">Path pattern to match (optional)</span>
+        </div>
+      </div>
+
+      <div class="form-group" id="queryMatchesGroup">
+        <label for="query_str_matches" class="form-label">Query String Pattern</label>
+        <input type="text" id="query_str_matches" name="query_str_matches" class="form-input" value="{{ rule.query_str_matches if rule else '' }}" placeholder="key=value">
+        <span class="form-hint">Query string pattern to match (optional)</span>
+      </div>
+
+      <div class="alert alert-warn" id="protocolWarning" style="display: none; margin-top: 1rem;">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span id="protocolWarningText"></span>
+      </div>
+    </div>
+
+    <div class="form-section" id="forwardSection" style="display: none;">
+      <h3 class="form-section-title">Forward Settings</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="forward_protocol" class="form-label">Forward Protocol</label>
+          <select id="forward_protocol" name="forward_protocol" class="form-input">
+            <option value="">Default</option>
+            <option value="http" {% if rule and rule.forward_protocol == 'http' %}selected{% endif %}>HTTP</option>
+            <option value="https" {% if rule and rule.forward_protocol == 'https' %}selected{% endif %}>HTTPS</option>
+            <option value="socks5" {% if rule and rule.forward_protocol == 'socks5' %}selected{% endif %}>SOCKS5</option>
+          </select>
+          <span class="form-hint">Protocol to use for forwarding</span>
+        </div>
+
+        <div class="form-group">
+          <label for="forward_host" class="form-label">Forward Host <span class="required forward-required">*</span></label>
+          <input type="text" id="forward_host" name="forward_host" class="form-input" value="{{ rule.forward_host if rule else '' }}" placeholder="proxy.example.com">
+          <span class="form-hint">IP address or hostname of the proxy server</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="forward_port" class="form-label">Forward Port <span class="required forward-required">*</span></label>
+        <input type="number" id="forward_port" name="forward_port" class="form-input" value="{{ rule.forward_port if rule else '' }}" placeholder="8080" min="1" max="65535">
+        <span class="form-hint">Port of the proxy server (1-65535)</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="/dashboard/proxy" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        {{ 'Update Rule' if rule else 'Create Rule' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const actionSelect = document.getElementById('action');
+  const forwardSection = document.getElementById('forwardSection');
+  const forwardIp = document.getElementById('forward_host');
+  const forwardPort = document.getElementById('forward_port');
+  
+  const protocolSelect = document.getElementById('protocol_matches');
+  const hostMatchesGroup = document.getElementById('hostMatchesGroup');
+  const pathMatchesGroup = document.getElementById('pathMatchesGroup');
+  const queryMatchesGroup = document.getElementById('queryMatchesGroup');
+  const protocolWarning = document.getElementById('protocolWarning');
+  const protocolWarningText = document.getElementById('protocolWarningText');
+  
+  const hostMatchesInput = document.getElementById('host_matches');
+  const pathMatchesInput = document.getElementById('path_matches');
+  const queryMatchesInput = document.getElementById('query_str_matches');
+
+  function updateForwardSection() {
+    const isForward = actionSelect.value === 'FORWARD';
+    forwardSection.style.display = isForward ? 'flex' : 'none';
+    
+    if (isForward) {
+      forwardIp.setAttribute('required', 'required');
+      forwardPort.setAttribute('required', 'required');
+    } else {
+      forwardIp.removeAttribute('required');
+      forwardPort.removeAttribute('required');
+    }
+  }
+
+  function updateProtocolFields() {
+    const protocol = protocolSelect.value;
+    
+    // Reset visibility
+    hostMatchesGroup.style.display = '';
+    pathMatchesGroup.style.display = '';
+    queryMatchesGroup.style.display = '';
+    protocolWarning.style.display = 'none';
+    
+    if (protocol === 'https') {
+      // HTTPS is encrypted - can see host (via SNI) and port, but not path or query
+      pathMatchesGroup.style.display = 'none';
+      queryMatchesGroup.style.display = 'none';
+      
+      // Clear values when hiding
+      pathMatchesInput.value = '';
+      queryMatchesInput.value = '';
+      
+      protocolWarning.style.display = 'flex';
+      protocolWarningText.textContent = 'HTTPS traffic is encrypted. Path and query string matching are not available (only host via SNI and port can be matched).';
+    } else if (protocol === 'tcp') {
+      // TCP is a transport protocol - no HTTP concepts
+      hostMatchesGroup.style.display = 'none';
+      pathMatchesGroup.style.display = 'none';
+      queryMatchesGroup.style.display = 'none';
+      
+      // Clear values when hiding
+      hostMatchesInput.value = '';
+      pathMatchesInput.value = '';
+      queryMatchesInput.value = '';
+      
+      protocolWarning.style.display = 'flex';
+      protocolWarningText.textContent = 'TCP is a transport-layer protocol. HTTP-specific matching (host, path, query) is not available. You can only match by IP and port.';
+    } else if (protocol === 'http') {
+      // HTTP allows all matching
+      protocolWarning.style.display = 'none';
+    } else {
+      // Any protocol selected - show warning about limitations
+      protocolWarning.style.display = 'flex';
+      protocolWarningText.textContent = 'When matching any protocol, host/path/query patterns will only work for HTTP traffic.';
+    }
+  }
+
+  actionSelect.addEventListener('change', updateForwardSection);
+  protocolSelect.addEventListener('change', updateProtocolFields);
+  
+  updateForwardSection();
+  updateProtocolFields();
+</script>
+{% endblock %}

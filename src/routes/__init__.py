@@ -1,8 +1,12 @@
+from .api import (
+    internal_proxy_router,
+)
 from .dashboard import (
     configs_router,
     devices_router,
     home_router,
     logs_router,
+    proxy_router,
     settings_router,
     users_router,
 )
@@ -32,4 +36,6 @@ __all__ = [
     "users_router",
     "home_router",
     "health_router",
+    "internal_proxy_router",
+    "proxy_router",
 ]

@@ -6,7 +6,7 @@ from argon2 import PasswordHasher
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 
-from db.models import PydanticReadUser, User
+from db.models import PydanticUser, User
 from modules.auth import verify_totp
 from modules.templates import Jinja2Templates
 
@@ -23,11 +23,11 @@ def users_to_dicts(user_id: int, users: list[User]) -> list[dict[str, typing.Any
     users.insert(0, user)
 
     for user in users:
-        read_user = PydanticReadUser.model_validate(user)
+        dict_user = PydanticUser.model_validate(user)
         dict_users.append(
             {
                 "totp_enabled": typing.cast(str | None, user.totp_secret) is not None,
-                **read_user.model_dump(include={"id", "username", "created_at"}),
+                **dict_user.model_dump(include={"id", "username", "created_at"}),
             }
         )
 

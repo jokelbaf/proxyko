@@ -10,7 +10,7 @@
   <div class="flex md:items-center justify-between mb-6 flex-col space-y-3 md:flex-row md:space-y-0">
     <div>
       <h1 class="content-title mb-0">Configs</h1>
-      <p class="content-subtitle mb-0">Manage proxy configurations and priorities</p>
+      <p class="content-subtitle mb-0">Manage dynamic PAC configurations and priorities</p>
     </div>
     <a href="/dashboard/configs/new" class="btn btn-sm">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,6 +56,10 @@
           <div class="config-meta">
             {% if c.description %}
             <span class="config-description">{{ c.description }}</span>
+            {% endif %}
+            {% if c.use_builtin_proxy %}
+            <span class="config-meta-separator">•</span>
+            <span class="config-builtin-badge">Built-in Proxy</span>
             {% endif %}
             {% if c.ip_filter %}
             <span class="config-meta-separator">•</span>

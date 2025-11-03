@@ -84,6 +84,15 @@
     <div class="form-section">
       <h3 class="form-section-title">PAC Function <span class="required">*</span></h3>
       
+      {% if proxy_host and proxy_port %}
+      <div class="form-group">
+        <label class="checkbox-label checkbox-label-inline">
+          <input type="checkbox" id="useBuiltinProxy" name="use_builtin_proxy" class="checkbox-input" {% if config and config.use_builtin_proxy %}checked{% endif %}>
+          <span class="checkbox-text">Use built-in proxy ({{ proxy_host }}:{{ proxy_port }})</span>
+        </label>
+      </div>
+      {% endif %}
+      
       <div class="form-group">
         <textarea id="function" name="function" class="form-input code-textarea" rows="20" required placeholder="function FindProxyForURL(url, host) {&#10;  // Your PAC logic here&#10;  return &quot;DIRECT&quot;;&#10;}">{{ config.function if config else 'function FindProxyForURL(url, host) {\n  // Your PAC logic here\n  return "DIRECT";\n}' }}</textarea>
         <span class="form-hint">The PAC file function that determines proxy behavior</span>
@@ -112,7 +121,16 @@
 </div>
 
 <script>
-  document.getElementById('function').addEventListener('keydown', function(e) {
+  const functionTextarea = document.getElementById('function');
+  const useBuiltinProxyCheckbox = document.getElementById('useBuiltinProxy');
+
+  let originalFunction = functionTextarea.value;
+  const builtinProxyFunction = `function FindProxyForURL(url, host) {
+  // Use built-in proxy
+  return "PROXY {{ proxy_host }}:{{ proxy_port }}";
+}`;
+
+  functionTextarea.addEventListener('keydown', function(e) {
     if (e.key === 'Tab') {
       e.preventDefault();
       const start = this.selectionStart;
@@ -123,5 +141,33 @@
       this.selectionStart = this.selectionEnd = start + 2;
     }
   });
+
+  if (useBuiltinProxyCheckbox) {
+    if (useBuiltinProxyCheckbox.checked) {
+      functionTextarea.value = builtinProxyFunction;
+      functionTextarea.readOnly = true;
+      functionTextarea.style.opacity = '0.6';
+      functionTextarea.style.cursor = 'not-allowed';
+    } else {
+      originalFunction = functionTextarea.value;
+    }
+
+    useBuiltinProxyCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        if (!functionTextarea.readOnly) {
+          originalFunction = functionTextarea.value;
+        }
+        functionTextarea.value = builtinProxyFunction;
+        functionTextarea.readOnly = true;
+        functionTextarea.style.opacity = '0.6';
+        functionTextarea.style.cursor = 'not-allowed';
+      } else {
+        functionTextarea.value = originalFunction;
+        functionTextarea.readOnly = false;
+        functionTextarea.style.opacity = '1';
+        functionTextarea.style.cursor = 'auto';
+      }
+    });
+  }
 </script>
 {% endblock %}

@@ -1,17 +1,23 @@
-import ipaddress
 import typing
 
 from fastapi import APIRouter, Request, Response
 from loguru import logger
 
 from db.models import AccessRecord, Config, ConfigMode, Device
-from modules.utility import get_real_ip
+from modules.utility import get_env_var, get_real_ip, is_ip_matched
 
 router = APIRouter()
 
 DEFAULT_RESPONSE = """
 function FindProxyForURL(url, host) {
     return "DIRECT";
+}
+"""
+
+BUILTIN_PROXY_RESPONSE = """
+function FindProxyForURL(url, host) {
+    // Use built-in proxy
+    return "PROXY %s:%s";
 }
 """
 
@@ -25,36 +31,28 @@ function FindProxyForURL(url, host) {
 MEDIA_TYPE = "application/x-ns-proxy-autoconfig"
 
 
-def is_ip_matched(ip: str, ip_filter: str) -> bool:
-    """Check if the given IP matches any of the IP addresses or CIDR ranges in the filter."""
-    try:
-        ip_obj = ipaddress.ip_address(ip)
-    except ValueError:
-        logger.warning(f"Invalid IP address: {ip}")
-        return False
-
-    entries = [entry.strip() for entry in ip_filter.split(",")]
-
-    for entry in entries:
-        if not entry:
-            continue
-
-        try:
-            network = ipaddress.ip_network(entry, strict=False)
-            if ip_obj in network:
-                return True
-        except ValueError:
-            logger.warning(f"Invalid IP filter entry: {entry}")
-            continue
-
-    return False
-
-
 def is_device_matched(device: Device | None, devices: list[Device]) -> bool:
     """Check if the given device matches any of the devices in the list."""
     if device is None:
         return False
     return any(d.id == device.id for d in devices)
+
+
+def config_to_function(config: Config) -> str:
+    """Convert a Config model to its PAC function representation."""
+    if config.use_builtin_proxy:
+        host = get_env_var("PROXY_PUBLIC_HOST")
+        port = get_env_var("PROXY_PUBLIC_PORT")
+
+        if not host or not port:
+            logger.error(
+                "PROXY_PUBLIC_HOST or PROXY_PUBLIC_PORT is not set in environment variables."
+            )
+            return DEFAULT_RESPONSE
+
+        return BUILTIN_PROXY_RESPONSE % (host, port)
+
+    return config.function
 
 
 @router.get("/pac", tags=["PAC"])
@@ -86,8 +84,8 @@ async def pac(request: Request, device_token: str | None = None) -> Response:
 
         if config.mode == ConfigMode.OR:
             if ip_matched or device_matched:
-                return Response(config.function, media_type=MEDIA_TYPE)
+                return Response(config_to_function(config), media_type=MEDIA_TYPE)
         elif config.mode == ConfigMode.AND and ip_matched and device_matched:
-            return Response(config.function, media_type=MEDIA_TYPE)
+            return Response(config_to_function(config), media_type=MEDIA_TYPE)
 
     return Response(DEFAULT_RESPONSE, media_type=MEDIA_TYPE)

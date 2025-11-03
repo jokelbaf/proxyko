@@ -28,10 +28,12 @@ from routes import (
     health_router,
     home_router,
     index_router,
+    internal_proxy_router,
     login_router,
     logout_router,
     logs_router,
     pac_router,
+    proxy_router,
     register_router,
     settings_router,
     users_router,
@@ -102,6 +104,8 @@ async def lifespan(app: FastAPI):
     app.state.pending_logins = pending_logins
 
     asyncio.create_task(clean_pending_logins_task(app))
+
+    app.state.last_proxy_heartbeat_time = None
 
     yield
     await db.close()
@@ -189,6 +193,8 @@ app.include_router(logs_router)
 app.include_router(settings_router)
 app.include_router(home_router)
 app.include_router(health_router)
+app.include_router(internal_proxy_router)
+app.include_router(proxy_router)
 
 
 if __name__ == "__main__":

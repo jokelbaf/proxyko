@@ -5,6 +5,7 @@ from .configs import router as configs_router
 from .devices import router as devices_router
 from .home import router as home_router
 from .logs import router as logs_router
+from .proxy import router as proxy_router
 from .settings import router as settings_router
 from .users import router as users_router
 
@@ -15,6 +16,7 @@ __all__ = [
     "settings_router",
     "users_router",
     "home_router",
+    "proxy_router",
 ]
 
 router = APIRouter()

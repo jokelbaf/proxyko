@@ -1,11 +1,20 @@
+x-vars:
+  PROXYKO_PORT: &PROXYKO_PORT 8032
+  PROXY_PORT: &PROXY_PORT 8041
+
 x-db-config: &db-config
-  # Remember to change these to secure values
-  MARIADB_ROOT_PASSWORD: "changeme_root"
-  MARIADB_DATABASE: "proxyko"
-  MARIADB_USER: "proxyko"
-  MARIADB_PASSWORD: "changeme_password"
-  MARIADB_HOST: "mariadb"
-  MARIADB_PORT: "3306"
+  MARIADB_ROOT_PASSWORD: changeme_root
+  MARIADB_DATABASE: proxyko
+  MARIADB_USER: proxyko
+  MARIADB_PASSWORD: changeme_password
+  MARIADB_HOST: mariadb
+  MARIADB_PORT: 3306
+
+x-shared-configs: &shared-configs
+  PROXYKO_HOST: proxyko
+  PROXYKO_PORT: *PROXYKO_PORT
+  INTERNAL_API_KEY: changeme_key
+  PROXY_PORT: *PROXY_PORT
 
 services:
   mariadb:
@@ -22,28 +31,49 @@ services:
       start_period: 5s
 
   proxyko:
-    build: .
+    image: jokelbaf/proxyko:latest
     depends_on:
       mariadb:
         condition: service_healthy
     restart: on-failure
     environment:
-      <<: *db-config
+      <<: [*db-config, *shared-configs]
 
-      # Can be configured to your needs
-      HOST: "0.0.0.0"
-      PORT: "8032"
-      LOGURU_LEVEL: "INFO"
+      # Service-specific settings
+      LOGURU_LEVEL: INFO
+      PROXY_PUBLIC_HOST: localhost
+      PROXY_PUBLIC_PORT: *PROXY_PORT
+
+      HOST: 0.0.0.0
+      PORT: *PROXYKO_PORT
 
     ports:
-      - "8032:8032"
-    
+      - target: *PROXYKO_PORT
+        published: *PROXYKO_PORT
+
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:$$PORT/health"]
+      test: ["CMD", "sh", "-c", "curl -f http://localhost:$$PROXYKO_PORT/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 5s
+
+  proxyko-proxy:
+    image: jokelbaf/proxyko-proxy:latest
+    depends_on:
+      proxyko:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      <<: *shared-configs
+
+      # Proxy-specific settings
+      HOST: 0.0.0.0
+      PORT: *PROXY_PORT
+
+    ports:
+      - target: *PROXY_PORT
+        published: *PROXY_PORT
 
 volumes:
   db_data:

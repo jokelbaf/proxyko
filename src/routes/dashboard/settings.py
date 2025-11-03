@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 
 from db.models import GlobalConfig, User
 from modules.templates import Jinja2Templates
+from routes.api.internal.proxy import notify_status_change
 
 router = APIRouter()
 
@@ -42,6 +43,8 @@ async def update_settings(
 
     config.require_auth = require_auth
     await config.save(update_fields=["require_auth"])
+
+    await notify_status_change(request.app.state)
 
     query_string = urllib.parse.urlencode({"message": "Settings have been saved successfully."})
     return RedirectResponse(

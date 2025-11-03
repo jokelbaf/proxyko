@@ -106,6 +106,13 @@
   white-space: pre;
   overflow-wrap: normal;
   overflow-x: auto;
+  transition: opacity var(--transition-base), cursor var(--transition-base);
+}
+
+.code-textarea:read-only {
+  background-color: var(--bg-tertiary);
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .form-actions {

@@ -19,6 +19,21 @@ class ConfigMode(str, Enum):
     AND = "AND"
 
 
+class ProxyAction(str, Enum):
+    FORWARD = "FORWARD"
+    """Forward the request to the specified proxy server."""
+    PROXY = "DIRECT"
+    """Directly send the request without proxying."""
+    BLOCK = "BLOCK"
+    """Deny the connection."""
+
+
+class ProtocolType(str, Enum):
+    HTTP = "http"
+    HTTPS = "https"
+    TCP = "tcp"
+
+
 class User(Model):
     id = fields.IntField(pk=True)
     username = fields.CharField(max_length=255, unique=True)
@@ -30,6 +45,7 @@ class User(Model):
     configs: fields.ReverseRelation["Config"]
     devices: fields.ReverseRelation["Device"]
     sessions: fields.ReverseRelation["Session"]
+    proxy_rules: fields.ReverseRelation["ProxyRule"]
 
     class Meta:
         table = "users"
@@ -92,6 +108,7 @@ class Config(Model):
     priority = fields.IntField()
     ip_filter = fields.CharField(max_length=500, null=True)
     function = fields.TextField()
+    use_builtin_proxy = fields.BooleanField(default=False)
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
     is_active = fields.BooleanField(default=True)
@@ -108,30 +125,49 @@ class Config(Model):
 class GlobalConfig(Model):
     server_id = fields.IntField(pk=True)
     require_auth = fields.BooleanField(default=False)
+    enable_proxy = fields.BooleanField(default=True)
 
     class Meta:
         table = "global_config"
 
 
-PydanticReadUser = pydantic_model_creator(
+class ProxyRule(Model):
+    id = fields.IntField(pk=True)
+    user: fields.ForeignKeyRelation["User"] = fields.ForeignKeyField(
+        "models.User", related_name="proxy_rules"
+    )
+    name = fields.CharField(max_length=255)
+    description = fields.TextField(null=True)
+    priority = fields.IntField()
+    ip_filter = fields.CharField(max_length=500, null=True)
+
+    protocol_matches = fields.CharEnumField(ProtocolType, null=True)
+    host_matches = fields.CharField(max_length=255, null=True)
+    port_matches = fields.CharField(max_length=255, null=True)
+    path_matches = fields.CharField(max_length=255, null=True)
+    query_str_matches = fields.CharField(max_length=255, null=True)
+
+    forward_protocol = fields.CharField(max_length=10, null=True)
+    forward_host = fields.CharField(max_length=255, null=True)
+    forward_port = fields.IntField(null=True)
+
+    action = fields.CharEnumField(ProxyAction, max_length=10, default=ProxyAction.FORWARD)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = "proxy_rules"
+
+
+PydanticUser = pydantic_model_creator(
     User,
-    name="ReadUser",
+    name="PydanticUser",
     exclude=("password",),
     model_config={"from_attributes": True},
 )
 
-PydanticUser = pydantic_model_creator(
-    User,
-    name="User",
-    exclude_readonly=True,
-    exclude=("totp_secret", "created_at", "updated_at"),
+PydanticProxyRule = pydantic_model_creator(
+    ProxyRule,
+    name="PydanticProxyRule",
+    model_config={"from_attributes": True},
 )
-
-PydanticDevice = pydantic_model_creator(
-    Device,
-    name="Device",
-    exclude_readonly=True,
-    exclude=("token", "created_at", "updated_at"),
-)
-
-PydanticConfig = pydantic_model_creator(Config, name="Config", exclude_readonly=True)

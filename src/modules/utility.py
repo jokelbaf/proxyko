@@ -1,8 +1,10 @@
+import ipaddress
 import os
 import typing
 
 from fastapi import Request
 from fastapi.datastructures import Address
+from loguru import logger
 
 
 @typing.overload
@@ -35,3 +37,28 @@ def get_real_ip(request: Request) -> str:
             return ip.split(",")[0].strip()
 
     return typing.cast(Address, request.client).host
+
+
+def is_ip_matched(ip: str, ip_filter: str) -> bool:
+    """Check if the given IP matches any of the IP addresses or CIDR ranges in the filter."""
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+    except ValueError:
+        logger.warning(f"Invalid IP address: {ip}")
+        return False
+
+    entries = [entry.strip() for entry in ip_filter.split(",")]
+
+    for entry in entries:
+        if not entry:
+            continue
+
+        try:
+            network = ipaddress.ip_network(entry, strict=False)
+            if ip_obj in network:
+                return True
+        except ValueError:
+            logger.warning(f"Invalid IP filter entry: {entry}")
+            continue
+
+    return False

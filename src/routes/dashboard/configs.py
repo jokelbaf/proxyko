@@ -1,16 +1,34 @@
 import re
 import typing
 import urllib.parse
+from typing import Annotated, TypeVar
 
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, BeforeValidator
 
 from db.models import Config, ConfigMode, Device, User
 from modules.templates import Jinja2Templates
+from modules.utility import get_env_var
+
+T = TypeVar("T")
+
+type EmptyToNone[T] = Annotated[T, BeforeValidator(lambda v: None if (v == "") else v)]
 
 router = APIRouter()
 
 templates = Jinja2Templates(directory="templates")
+
+
+class ConfigFormModel(BaseModel):
+    name: str
+    description: EmptyToNone[str | None] = None
+    ip_filter: EmptyToNone[str | None] = None
+    function: str
+    is_active: bool = False
+    use_builtin_proxy: bool = False
+    device_ids: list[str] = []
+    mode: ConfigMode
 
 
 def validate_pac_file(content: str) -> bool:
@@ -41,35 +59,29 @@ def validate_ip_filter(ip_filter: str) -> bool:
     return True
 
 
-def validate_config(
-    name: str = Form(...),
-    description: str | None = Form(default=None),
-    ip_filter: str | None = Form(default=None),
-    function: str = Form(...),
-    mode: str = Form(...),
-) -> list[str]:
+def validate_config(form_data: ConfigFormModel) -> list[str]:
     """Validate config form data."""
     errors: list[str] = []
 
-    if not name or len(name) < 3 or len(name) > 64:
+    if not form_data.name or len(form_data.name) < 3 or len(form_data.name) > 64:
         errors.append("Config name must be between 3 and 64 characters long.")
 
-    if description is not None and len(description) > 256:
+    if form_data.description is not None and len(form_data.description) > 256:
         errors.append("Description cannot exceed 256 characters.")
 
-    if ip_filter is not None:
-        if len(ip_filter) > 500:
+    if form_data.ip_filter is not None:
+        if len(form_data.ip_filter) > 500:
             errors.append("IP filter cannot exceed 500 characters.")
-        elif not validate_ip_filter(ip_filter):
+        elif not validate_ip_filter(form_data.ip_filter):
             errors.append(
                 "IP filter format is invalid. Use comma-separated IP addresses or CIDR ranges "
                 "(e.g., 192.168.1.0/24, 10.0.0.1)."
             )
 
-    if mode != "AND" and mode != "OR":
+    if form_data.mode not in [ConfigMode.AND, ConfigMode.OR]:
         errors.append("Invalid config mode selected.")
 
-    if not validate_pac_file(function):
+    if not validate_pac_file(form_data.function):
         errors.append(
             "PAC file content is invalid. Ensure it contains a valid FindProxyForURL function."
         )
@@ -92,6 +104,7 @@ def configs_to_dicts(configs: list[Config]) -> list[dict[str, typing.Any]]:
                 "ip_filter": config.ip_filter,
                 "function": config.function,
                 "is_active": config.is_active,
+                "use_builtin_proxy": config.use_builtin_proxy,
                 "mode": config.mode,
                 "mode_display": mode_display_map.get(config.mode, config.mode),
                 "created_at": config.created_at,
@@ -135,6 +148,9 @@ async def new_config(
     user: User = request.state.user
     devices = await Device.all()
 
+    proxy_host = get_env_var("PROXY_PUBLIC_HOST")
+    proxy_port = get_env_var("PROXY_PUBLIC_PORT")
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.config.html",
@@ -142,6 +158,8 @@ async def new_config(
             "user": user,
             "devices": devices,
             "config": None,
+            "proxy_host": proxy_host,
+            "proxy_port": proxy_port,
             "errors": errors or [],
         },
     )
@@ -150,30 +168,20 @@ async def new_config(
 @router.post("/dashboard/configs/new", tags=["Dashboard"])
 async def create_config(
     request: Request,
-    name: str = Form(...),
-    description: str | None = Form(default=None),
-    ip_filter: str | None = Form(default=None),
-    function: str = Form(...),
-    is_active: bool = Form(default=False),
-    mode: ConfigMode = Form(...),
+    form_data: ConfigFormModel = Form(),
 ) -> Response:
     """Create a new config."""
     user: User = request.state.user
 
-    errors = validate_config(
-        name=name,
-        description=description,
-        ip_filter=ip_filter,
-        function=function,
-        mode=mode,
-    )
+    errors = validate_config(form_data)
 
-    form_data = await request.form()
-    device_ids_raw = form_data.getlist("device_ids")
-    device_ids = [int(str(did)) for did in device_ids_raw if isinstance(did, str) and did.isdigit()]
+    device_ids_parsed = [int(d_id) for d_id in form_data.device_ids if d_id.isdigit()]
 
     if errors:
         devices = await Device.all()
+        proxy_host = get_env_var("PROXY_PUBLIC_HOST")
+        proxy_port = get_env_var("PROXY_PUBLIC_PORT")
+
         return templates.TemplateResponse(
             request=request,
             name="dashboard.config.html",
@@ -181,6 +189,8 @@ async def create_config(
                 "user": user,
                 "devices": devices,
                 "config": None,
+                "proxy_host": proxy_host,
+                "proxy_port": proxy_port,
                 "errors": errors,
             },
         )
@@ -189,17 +199,12 @@ async def create_config(
 
     new_config = await Config.create(
         user=user,
-        name=name,
-        description=description,
         priority=(top_priority_config.priority + 1) if top_priority_config else 1,
-        ip_filter=ip_filter,
-        function=function,
-        is_active=is_active,
-        mode=mode,
+        **form_data.model_dump(exclude={"device_ids"}),
     )
 
-    if device_ids:
-        devices = await Device.filter(id__in=device_ids)
+    if device_ids_parsed:
+        devices = await Device.filter(id__in=device_ids_parsed)
         await new_config.devices.add(*devices)
 
     query_string = urllib.parse.urlencode({"message": "Config created successfully."})
@@ -223,6 +228,9 @@ async def config(
     if config is None:
         raise HTTPException(status_code=404, detail="The requested config does not exist.")
 
+    proxy_host = get_env_var("PROXY_PUBLIC_HOST")
+    proxy_port = get_env_var("PROXY_PUBLIC_PORT")
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.config.html",
@@ -230,6 +238,8 @@ async def config(
             "user": user,
             "devices": devices,
             "config": config,
+            "proxy_host": proxy_host,
+            "proxy_port": proxy_port,
             "errors": errors or [],
         },
     )
@@ -239,12 +249,7 @@ async def config(
 async def update_config(
     request: Request,
     config_id: int,
-    name: str = Form(...),
-    description: str | None = Form(default=None),
-    ip_filter: str | None = Form(default=None),
-    function: str = Form(...),
-    is_active: bool = Form(default=False),
-    mode: ConfigMode = Form(...),
+    form_data: ConfigFormModel = Form(),
 ) -> Response:
     """Update an existing config."""
     user: User = request.state.user
@@ -253,20 +258,14 @@ async def update_config(
     if existing_config is None:
         raise HTTPException(status_code=404, detail="The requested config does not exist.")
 
-    errors = validate_config(
-        name=name,
-        description=description,
-        ip_filter=ip_filter,
-        function=function,
-        mode=mode,
-    )
+    errors = validate_config(form_data)
 
-    form_data = await request.form()
-    device_ids_raw = form_data.getlist("device_ids")
-    device_ids = [int(str(did)) for did in device_ids_raw if isinstance(did, str) and did.isdigit()]
+    device_ids_parsed = [int(d_id) for d_id in form_data.device_ids if d_id.isdigit()]
 
     if errors:
         devices = await Device.all()
+        proxy_host = get_env_var("PROXY_PUBLIC_HOST")
+        proxy_port = get_env_var("PROXY_PUBLIC_PORT")
         return templates.TemplateResponse(
             request=request,
             name="dashboard.config.html",
@@ -274,24 +273,29 @@ async def update_config(
                 "user": user,
                 "devices": devices,
                 "config": existing_config,
+                "proxy_host": proxy_host,
+                "proxy_port": proxy_port,
                 "errors": errors,
             },
         )
 
-    existing_config.name = name
-    existing_config.description = description  # type: ignore
-    existing_config.ip_filter = ip_filter  # type: ignore
-    existing_config.function = function
-    existing_config.is_active = is_active
-    existing_config.mode = mode
+    existing_config.update_from_dict(form_data.model_dump(exclude={"device_ids"}))  # type: ignore
 
     await existing_config.save(
-        update_fields=["name", "description", "ip_filter", "function", "is_active", "mode"]
+        update_fields=[
+            "name",
+            "description",
+            "ip_filter",
+            "function",
+            "is_active",
+            "use_builtin_proxy",
+            "mode"
+        ]
     )
 
     await existing_config.devices.clear()
-    if device_ids:
-        devices = await Device.filter(id__in=device_ids)
+    if device_ids_parsed:
+        devices = await Device.filter(id__in=device_ids_parsed)
         await existing_config.devices.add(*devices)
 
     query_string = urllib.parse.urlencode({"message": "Config updated successfully."})

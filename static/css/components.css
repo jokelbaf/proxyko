@@ -146,6 +146,7 @@
 .alert-info {
   display: flex;
   align-items: flex-start;
+  gap: 0.75rem;
   padding: 1rem;
   background: rgba(184, 212, 201, 0.15);
   border: 1px solid rgba(184, 212, 201, 0.3);
@@ -157,6 +158,24 @@
 [data-theme="dark"] .alert-info {
   background: rgba(184, 212, 201, 0.1);
   border-color: rgba(184, 212, 201, 0.2);
+}
+
+.alert-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  color: #d97706;
+  font-size: 0.875rem;
+}
+
+[data-theme="dark"] .alert-warn {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
 }
 
 .alert-list {

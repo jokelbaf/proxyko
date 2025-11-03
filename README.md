@@ -28,6 +28,7 @@ Proxyko offers a range of features to simplify proxy configuration management:
 - **IP-based Access Control**: Restrict device access based on IP addresses for better security.
 - **Real-time Monitoring**: Track and analyze the service usage statistics through the dashboard.
 - **2FA Support**: Improve account security with two-factor authentication.
+- **Built-in Proxy Server**: Optional integrated [proxy server](https://github.com/jokelbaf/proxyko-proxy) with advanced rules configuration.
 
 ## Installation
 
@@ -57,6 +58,8 @@ Any contributions are welcome! To set up a development environment, follow these
    ```bash
    uv run src/app.py
    ```
+
+To work with proxy-related features, you need to clone and run the [proxy server](https://github.com/jokelbaf/proxyko-proxy) separately.
 
 ## Motivation
 

@@ -114,6 +114,15 @@
   color: #cb9cf9;
 }
 
+.config-builtin-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 6px;
+  background-color: rgba(212, 103, 69, 0.2);
+  color: var(--primary);
+}
+
 .toggle-container {
   display: flex;
   align-items: center;
