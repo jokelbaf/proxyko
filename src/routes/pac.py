@@ -1,5 +1,3 @@
-import typing
-
 from fastapi import APIRouter, Request, Response
 from loguru import logger
 
@@ -73,19 +71,22 @@ async def pac(request: Request, device_token: str | None = None) -> Response:
         ip=get_real_ip(request), user_agent=user_agent, device=device
     )
 
-    configs = await Config.filter(is_active=True).order_by("priority")
+    configs = await Config.filter(is_active=True).prefetch_related("devices").order_by("priority")
 
     for config in configs:
-        ip_filter = typing.cast(str | None, config.ip_filter)
-        ip_matched = ip_filter is None or is_ip_matched(record.ip, ip_filter)
+        ip_filter = config.ip_filter
+        devices = await config.devices.all()
 
-        config_devices = await config.devices.all()
-        device_matched = not config_devices or is_device_matched(device, config_devices)
+        ip_matched = ip_filter and is_ip_matched(record.ip, ip_filter)
+        device_matched = devices and is_device_matched(device, devices)
 
         if config.mode == ConfigMode.OR:
             if ip_matched or device_matched:
                 return Response(config_to_function(config), media_type=MEDIA_TYPE)
-        elif config.mode == ConfigMode.AND and ip_matched and device_matched:
-            return Response(config_to_function(config), media_type=MEDIA_TYPE)
+        else:  # AND
+            ip_ok = not ip_filter or is_ip_matched(record.ip, ip_filter)
+            device_ok = not devices or is_device_matched(device, devices)
+            if ip_ok and device_ok:
+                return Response(config_to_function(config), media_type=MEDIA_TYPE)
 
     return Response(DEFAULT_RESPONSE, media_type=MEDIA_TYPE)
