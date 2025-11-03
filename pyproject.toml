@@ -1,6 +1,6 @@
 [project]
 name = "proxyko"
-version = "0.2.1"
+version = "0.2.2"
 description = "Proxyko is a powerful Proxy Auto-Configuration (PAC) service that allows users to manage per-device proxy settings through a user-friendly web dashboard."
 readme = "README.md"
 requires-python = ">=3.13"
