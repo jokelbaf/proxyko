@@ -6,8 +6,8 @@ import time
 
 import dotenv
 import uvicorn
-from fastapi import FastAPI, Request, Response
-from fastapi.exceptions import HTTPException
+from fastapi import FastAPI
+from fastapi.exceptions import HTTPException, ValidationException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
@@ -17,8 +17,14 @@ from slowapi.middleware import SlowAPIMiddleware
 
 import db
 from db.models import AccessRecord
+from errors import (
+    http_exception_handler,
+    internal_server_error_handler,
+    not_found_exc_handler,
+    rate_limit_exc_handler,
+    validation_exception_handler,
+)
 from middlewares import AuthMiddleware, ThemeMiddleware
-from modules.templates import Jinja2Templates
 from modules.utility import get_real_ip
 from routes import (
     PendingLogins,
@@ -41,7 +47,6 @@ from routes import (
 
 dotenv.load_dotenv()
 
-templates = Jinja2Templates(directory="templates")
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
@@ -113,61 +118,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-
-@app.exception_handler(RateLimitExceeded)
-def rate_limit_exc_handler(request: Request, _: RateLimitExceeded) -> Response:
-    """Handle rate limit exceeded errors."""
-    return templates.TemplateResponse(
-        request=request,
-        name="error.html",
-        context={
-            "request": request,
-            "status": 429,
-            "title": "Too Many Requests",
-            "details": (
-                "Hold on there! You're making requests too quickly. "
-                "Please slow down and try again in a moment."
-            ),
-        },
-        status_code=429,
-    )
-
-
-@app.exception_handler(404)
-def not_found_exc_handler(request: Request, exc: HTTPException) -> Response:
-    """Handle not found errors."""
-    details = (
-        exc.detail
-        if exc.detail and exc.detail != "Not Found"
-        else "The requested resource was not found."
-    )
-    return templates.TemplateResponse(
-        request=request,
-        name="error.html",
-        context={
-            "request": request,
-            "status": 404,
-            "title": "Not Found",
-            "details": details,
-        },
-        status_code=404,
-    )
-
-
-@app.exception_handler(HTTPException)
-def http_exception_handler(request: Request, exc: HTTPException) -> Response:
-    """Handle generic HTTP exceptions."""
-    return templates.TemplateResponse(
-        request=request,
-        name="error.html",
-        context={
-            "request": request,
-            "status": exc.status_code,
-            "title": "Error",
-            "details": exc.detail if exc.detail else "An unexpected error occurred.",
-        },
-        status_code=exc.status_code,
-    )
+app.add_exception_handler(RateLimitExceeded, rate_limit_exc_handler)
+app.add_exception_handler(404, not_found_exc_handler)  # type: ignore[arg-type]
+app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(ValidationException, validation_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(Exception, internal_server_error_handler)
+app.add_exception_handler(500, internal_server_error_handler)
 
 
 limiter = Limiter(key_func=get_real_ip, default_limits=["15/minute"])
