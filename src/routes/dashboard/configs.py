@@ -289,7 +289,7 @@ async def update_config(
             "function",
             "is_active",
             "use_builtin_proxy",
-            "mode"
+            "mode",
         ]
     )
 

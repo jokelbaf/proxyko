@@ -116,10 +116,9 @@ def validate_proxy_rule(form_data: ProxyRuleFormModel, forward_port_int: int | N
     if form_data.action not in list(ProxyAction):
         errors.append("Invalid proxy action selected.")
 
-    if (
-        form_data.protocol_matches
-        and form_data.protocol_matches not in [e.value for e in ProtocolType]
-    ):
+    if form_data.protocol_matches and form_data.protocol_matches not in [
+        e.value for e in ProtocolType
+    ]:
         errors.append("Invalid protocol type selected.")
 
     if form_data.host_matches:
@@ -156,10 +155,11 @@ def validate_proxy_rule(form_data: ProxyRuleFormModel, forward_port_int: int | N
         elif not (1 <= forward_port_int <= 65535):
             errors.append("Forward port must be between 1 and 65535.")
 
-        if (
-            form_data.forward_protocol
-            and form_data.forward_protocol not in ["http", "https", "socks5"]
-        ):
+        if form_data.forward_protocol and form_data.forward_protocol not in [
+            "http",
+            "https",
+            "socks5",
+        ]:
             errors.append("Invalid forward protocol. Use http, https, or socks5.")
 
     return errors
@@ -200,8 +200,8 @@ async def proxy(
     rules = await ProxyRule.filter(user=user).order_by("priority")
 
     is_proxy_healthy = (
-        request.app.state.last_proxy_heartbeat_time is not None and
-        time.time() - request.app.state.last_proxy_heartbeat_time < 30
+        request.app.state.last_proxy_heartbeat_time is not None
+        and time.time() - request.app.state.last_proxy_heartbeat_time < 30
     )
 
     return templates.TemplateResponse(
@@ -336,7 +336,7 @@ async def update_proxy_rule(
             },
         )
 
-    existing_rule.update_from_dict(    # type: ignore
+    existing_rule.update_from_dict(  # type: ignore
         {
             **form_data.model_dump(exclude={"protocol_matches", "forward_port"}),
             "protocol_matches": protocol_matches_enum,
