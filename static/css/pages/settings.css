@@ -1,5 +1,49 @@
 /* Settings Page */
 
+/* Version Info */
+
+.version-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.version-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.version-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+}
+
+.version-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.version-number {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 /* Form */
 
 .settings-form {
@@ -135,6 +179,15 @@
 @media (max-width: 640px) {
   .settings-header h1 {
     font-size: 1.5rem;
+  }
+
+  .version-info {
+    padding: 1rem;
+  }
+
+  .version-icon {
+    width: 2.25rem;
+    height: 2.25rem;
   }
 
   .settings-section {
