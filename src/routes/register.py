@@ -61,6 +61,6 @@ async def register_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    set_secure_cookie(rsp, key="session-token", value=session_token)
+    set_secure_cookie(rsp, key="session-token", value=session_token, max_age=60 * 60 * 24 * 7)
 
     return rsp

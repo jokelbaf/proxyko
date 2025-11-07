@@ -101,7 +101,7 @@ async def login_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    set_secure_cookie(rsp, key="session-token", value=session_token)
+    set_secure_cookie(rsp, key="session-token", value=session_token, max_age=60 * 60 * 24 * 7)
 
     return rsp
 
@@ -150,7 +150,7 @@ async def login_2fa_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    set_secure_cookie(rsp, key="session-token", value=session_token)
+    set_secure_cookie(rsp, key="session-token", value=session_token, max_age=60 * 60 * 24 * 7)
     delete_secure_cookie(rsp, key="pending-login-token")
 
     del request.app.state.pending_logins[pending_login_token]
