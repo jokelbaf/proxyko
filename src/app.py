@@ -1,10 +1,14 @@
+# ruff: noqa: E402
+import dotenv
+
+dotenv.load_dotenv()
+
 import asyncio
 import contextlib
 import logging
 import os
 import time
 
-import dotenv
 import uvicorn
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException, ValidationException
@@ -44,9 +48,6 @@ from routes import (
     settings_router,
     users_router,
 )
-
-dotenv.load_dotenv()
-
 
 for handler in logging.root.handlers[:]:
     logging.root.removeHandler(handler)
