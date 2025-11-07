@@ -1,3 +1,5 @@
+from fnmatch import fnmatchcase
+
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -5,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from db.models import Session, User
 from modules.utility import get_env_var
 
-EXCLUDED_ROUTES: list[str] = ["/pac", "/logout", "/health", ".js", ".css"]
+EXCLUDED_ROUTES: list[str] = ["/pac", "/logout", "/health", "/static/*"]
 
 AUTH_ROUTES: list[str] = [
     "/login",
@@ -16,8 +18,8 @@ AUTH_ROUTES: list[str] = [
 
 def is_protected_route(path: str) -> bool:
     """Check if the given path is a protected route."""
-    is_in_excluded = not any(path.endswith(r) for r in EXCLUDED_ROUTES)
-    is_in_auth = not any(path.startswith(r) for r in AUTH_ROUTES)
+    is_in_excluded = not any(fnmatchcase(path, r) for r in EXCLUDED_ROUTES)
+    is_in_auth = not any(fnmatchcase(path, r) for r in AUTH_ROUTES)
     return is_in_excluded and is_in_auth
 
 
