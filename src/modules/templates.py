@@ -1,6 +1,7 @@
 import os
 import typing
 from collections.abc import Sequence
+from fnmatch import fnmatchcase
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates as BaseJinja2Templates
@@ -17,12 +18,18 @@ ROUTE_INFO: dict[str, RouteInfo] = {
     "/dashboard/home": {"title": "Home", "active": "home"},
     "/dashboard/configs": {"title": "Configs", "active": "configs"},
     "/dashboard/configs/new": {"title": "New Config", "active": "configs"},
+    "/dashboard/configs/*": {"title": "Edit Config", "active": "configs"},
     "/dashboard/devices": {"title": "Devices", "active": "devices"},
-    "/dashboard/devices/new": {"title": "Devices", "active": "devices"},
+    "/dashboard/devices/new": {"title": "New Device", "active": "devices"},
+    "/dashboard/devices/*": {"title": "Edit Device", "active": "devices"},
     "/dashboard/users": {"title": "Users", "active": "users"},
-    "/dashboard/users/new": {"title": "Users", "active": "users"},
+    "/dashboard/users/new": {"title": "New User", "active": "users"},
+    "/dashboard/users/*": {"title": "Edit User", "active": "users"},
     "/dashboard/logs": {"title": "Logs", "active": "logs"},
     "/dashboard/settings": {"title": "Settings", "active": "settings"},
+    "/dashboard/proxy": {"title": "Proxy", "active": "proxy"},
+    "/dashboard/proxy/rule/new": {"title": "New Rule", "active": "proxy"},
+    "/dashboard/proxy/rule/*": {"title": "Edit Rule", "active": "proxy"},
 }
 
 
@@ -37,13 +44,10 @@ def auto_context_processor(request: Request) -> dict[str, typing.Any]:
         context["page_title"] = route_info["title"]
         context["active_page"] = route_info["active"]
     else:
-        for route_pattern, _ in ROUTE_INFO.items():
-            if "/" in route_pattern and path.startswith(route_pattern.rsplit("/", 1)[0] + "/"):
-                parts = path.split("/")
-                if len(parts) >= 3:
-                    section = parts[2]
-                    context["page_title"] = f"Edit {section.capitalize().rstrip('s')}"
-                    context["active_page"] = section
+        for route_pattern, cfg in ROUTE_INFO.items():
+            if fnmatchcase(path, route_pattern):
+                context["page_title"] = cfg["title"]
+                context["active_page"] = cfg["active"]
                 break
 
     return context
