@@ -5,6 +5,8 @@ from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator  # type: ignore
 from tortoise.models import Model
 
+from config import SESSION_EXPIRY_DAYS
+
 
 class DeviceType(str, Enum):
     DESKTOP = "DESKTOP"
@@ -60,8 +62,8 @@ class Session(Model):
     created_at = fields.DatetimeField(auto_now_add=True)
 
     def is_expired(self) -> bool:
-        """Check if the session is expired (valid for 7 days)."""
-        return self.created_at + timedelta(days=7) < datetime.now(tz=UTC)
+        """Check if the session is expired (valid for SESSION_EXPIRY_DAYS days)."""
+        return self.created_at + timedelta(days=SESSION_EXPIRY_DAYS) < datetime.now(tz=UTC)
 
     class Meta:
         table = "sessions"

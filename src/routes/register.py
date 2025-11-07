@@ -4,6 +4,7 @@ from argon2 import PasswordHasher
 from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import RedirectResponse
 
+from config import SESSION_EXPIRY_DAYS
 from db.models import Session, User
 from modules.cookies import set_secure_cookie
 from modules.templates import Jinja2Templates
@@ -61,6 +62,8 @@ async def register_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    set_secure_cookie(rsp, key="session-token", value=session_token, max_age=60 * 60 * 24 * 7)
+    set_secure_cookie(
+        rsp, key="session-token", value=session_token, max_age=SESSION_EXPIRY_DAYS * 24 * 60 * 60
+    )
 
     return rsp

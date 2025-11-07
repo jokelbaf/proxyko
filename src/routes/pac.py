@@ -1,32 +1,16 @@
 from fastapi import APIRouter, Request, Response
 from loguru import logger
 
+from config import (
+    PAC_BUILTIN_PROXY_RESPONSE,
+    PAC_DEFAULT_RESPONSE,
+    PAC_MEDIA_TYPE,
+    PAC_UNAUTHORIZED_RESPONSE,
+)
 from db.models import AccessRecord, Config, ConfigMode, Device
 from modules.utility import get_env_var, get_real_ip, is_ip_matched
 
 router = APIRouter()
-
-DEFAULT_RESPONSE = """
-function FindProxyForURL(url, host) {
-    return "DIRECT";
-}
-"""
-
-BUILTIN_PROXY_RESPONSE = """
-function FindProxyForURL(url, host) {
-    // Use built-in proxy
-    return "PROXY %s:%s";
-}
-"""
-
-UNAUTHORIZED_RESPONSE = """
-function FindProxyForURL(url, host) {
-    alert("Unauthorized device. Proxy access denied.");
-    return "DIRECT";
-}
-"""
-
-MEDIA_TYPE = "application/x-ns-proxy-autoconfig"
 
 
 def is_device_matched(device: Device | None, devices: list[Device]) -> bool:
@@ -46,9 +30,9 @@ def config_to_function(config: Config) -> str:
             logger.error(
                 "PROXY_PUBLIC_HOST or PROXY_PUBLIC_PORT is not set in environment variables."
             )
-            return DEFAULT_RESPONSE
+            return PAC_DEFAULT_RESPONSE
 
-        return BUILTIN_PROXY_RESPONSE % (host, port)
+        return PAC_BUILTIN_PROXY_RESPONSE % (host, port)
 
     return config.function
 
@@ -58,12 +42,12 @@ async def pac(request: Request, device_token: str | None = None) -> Response:
     """Generate and return the PAC file based on active configurations."""
     if device_token is not None and len(device_token) > 64:
         # Prevent excessively long tokens
-        return Response(UNAUTHORIZED_RESPONSE, media_type=MEDIA_TYPE)
+        return Response(PAC_UNAUTHORIZED_RESPONSE, media_type=PAC_MEDIA_TYPE)
 
     device = await Device.get_or_none(token=device_token)
 
     if device is None and request.app.state.global_config.require_auth:
-        return Response(UNAUTHORIZED_RESPONSE, media_type=MEDIA_TYPE)
+        return Response(PAC_UNAUTHORIZED_RESPONSE, media_type=PAC_MEDIA_TYPE)
 
     user_agent = request.headers.get("User-Agent")
 
@@ -82,11 +66,11 @@ async def pac(request: Request, device_token: str | None = None) -> Response:
 
         if config.mode == ConfigMode.OR:
             if ip_matched or device_matched:
-                return Response(config_to_function(config), media_type=MEDIA_TYPE)
+                return Response(config_to_function(config), media_type=PAC_MEDIA_TYPE)
         else:  # AND
             ip_ok = not ip_filter or is_ip_matched(record.ip, ip_filter)
             device_ok = not devices or is_device_matched(device, devices)
             if ip_ok and device_ok:
-                return Response(config_to_function(config), media_type=MEDIA_TYPE)
+                return Response(config_to_function(config), media_type=PAC_MEDIA_TYPE)
 
-    return Response(DEFAULT_RESPONSE, media_type=MEDIA_TYPE)
+    return Response(PAC_DEFAULT_RESPONSE, media_type=PAC_MEDIA_TYPE)

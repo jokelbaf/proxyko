@@ -3,6 +3,7 @@ import urllib.parse
 from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import RedirectResponse
 
+from config import VERSION
 from db.models import GlobalConfig, User
 from modules.templates import Jinja2Templates
 from routes.api.internal.proxy import notify_status_change
@@ -29,6 +30,7 @@ async def settings(
             "user": user,
             "config": config,
             "message": message,
+            "version": VERSION,
         },
     )
 

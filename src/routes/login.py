@@ -7,6 +7,7 @@ from argon2 import PasswordHasher
 from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import RedirectResponse
 
+from config import SESSION_EXPIRY_DAYS
 from db.models import Session, User
 from modules.auth import verify_totp
 from modules.cookies import delete_secure_cookie, set_secure_cookie
@@ -101,7 +102,9 @@ async def login_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    set_secure_cookie(rsp, key="session-token", value=session_token, max_age=60 * 60 * 24 * 7)
+    set_secure_cookie(
+        rsp, key="session-token", value=session_token, max_age=SESSION_EXPIRY_DAYS * 24 * 60 * 60
+    )
 
     return rsp
 
@@ -150,7 +153,9 @@ async def login_2fa_post(
     session_token = secrets.token_hex(32)
     await Session.create(user=user, token=session_token)
 
-    set_secure_cookie(rsp, key="session-token", value=session_token, max_age=60 * 60 * 24 * 7)
+    set_secure_cookie(
+        rsp, key="session-token", value=session_token, max_age=SESSION_EXPIRY_DAYS * 24 * 60 * 60
+    )
     delete_secure_cookie(rsp, key="pending-login-token")
 
     del request.app.state.pending_logins[pending_login_token]
