@@ -1,6 +1,6 @@
 import os
 
-VERSION: str = "0.2.4"
+VERSION: str = "0.2.5"
 """Current version of the project."""
 
 SESSION_EXPIRY_DAYS: int = int(os.getenv("SESSION_EXPIRY_DAYS", "7"))
