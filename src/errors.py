@@ -1,6 +1,7 @@
 from fastapi import Request, Response
 from fastapi.exceptions import HTTPException, ValidationException
-from fastapi.templating import Jinja2Templates
+
+from modules.templates import Jinja2Templates
 
 templates = Jinja2Templates(directory="templates")
 
