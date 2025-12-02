@@ -1,5 +1,5 @@
 from fastapi import Request, Response
-from fastapi.exceptions import HTTPException, ValidationException
+from fastapi.exceptions import HTTPException, RequestValidationError, ValidationException
 
 from modules.templates import Jinja2Templates
 
@@ -59,7 +59,9 @@ def http_exception_handler(request: Request, exc: HTTPException) -> Response:
     )
 
 
-def validation_exception_handler(request: Request, _: ValidationException) -> Response:
+def validation_exception_handler(
+    request: Request, _: ValidationException | RequestValidationError
+) -> Response:
     """Handle validation errors."""
     return templates.TemplateResponse(
         request=request,

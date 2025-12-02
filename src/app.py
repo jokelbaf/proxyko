@@ -11,7 +11,7 @@ import time
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.exceptions import HTTPException, ValidationException
+from fastapi.exceptions import HTTPException, RequestValidationError, ValidationException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
@@ -123,6 +123,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exc_handler)
 app.add_exception_handler(404, not_found_exc_handler)  # type: ignore[arg-type]
 app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(ValidationException, validation_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
 app.add_exception_handler(Exception, internal_server_error_handler)
 app.add_exception_handler(500, internal_server_error_handler)
 
